@@ -1,4 +1,4 @@
-name: mzWonderland
+name: QCenv
 channels:
   - conda-forge
   - defaults
@@ -226,4 +226,3 @@ dependencies:
       - tifffile==2023.8.30
       - tzdata==2023.3
       - wheezy-template==3.2.1
-prefix: C:\Users\wittej\.conda\envs\mzWonderland
