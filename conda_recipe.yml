@@ -219,7 +219,7 @@ dependencies:
       - networkx==3.1
       - pandas==2.1.0
       - pyimzml==1.5.3
-      - pym2aia==0.3.2
+      - pym2aia==0.5.1
       - pywavelets==1.4.1
       - scikit-image==0.21.0
       - simpleitk==2.2.1
