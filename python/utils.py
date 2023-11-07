@@ -128,8 +128,8 @@ def collect_image_stats(Image # m2aia-ImzML Reader object
         median_nr += (stat.median(inten),)
         max_int_nr += (max(inten),)
         min_int_nr += (min(inten),)
-        max_mz_nr += (max(mass))
-        min_mz_nr += (min(mass))
+        max_mz_nr += (max(mass),)
+        min_mz_nr += (min(mass),)
         max_abun_nr += (mass[np.where(inten == max(inten))[0][0]],)
 
     return (index_nr, peak_nr, tic_nr, median_nr, max_int_nr, min_int_nr, max_mz_nr, min_mz_nr, max_abun_nr)
