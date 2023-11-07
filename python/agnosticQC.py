@@ -79,5 +79,7 @@ def report_agnostic_QC(file_name: str):
     image_min_mz_number(mask_bad_image(image_stats[0], image_stats[7], I.GetIndexArray()[0]),
                          pdf_pages, x_lims, y_lims)
 
+
+
     pdf_pages.close()
     print("QC sussefully generated at: ", pdf_file_path)
