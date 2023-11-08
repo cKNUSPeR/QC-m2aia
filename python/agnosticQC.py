@@ -8,7 +8,7 @@ def report_agnostic_QC(file_name: str):
     I = m2.ImzMLReader(file_name)
 
     # Create a PDF file to save the figures
-    pdf_file_path = file_name[:-6] + "_output_QC(1_4).pdf"
+    pdf_file_path = file_name[:-6] + "_agnostic_QC.pdf"
     pdf_pages = matplotlib.backends.backend_pdf.PdfPages(pdf_file_path)
 
     # create format flag dict to check formatting of imzML file
@@ -79,7 +79,14 @@ def report_agnostic_QC(file_name: str):
     image_min_mz_number(mask_bad_image(image_stats[0], image_stats[7], I.GetIndexArray()[0]),
                          pdf_pages, x_lims, y_lims)
 
+    # visualize the mean spectra
+    if format_flags["centroid"]:
+        plot_centroid_spectrum(I.GetXAxis(), I.GetMeanSpectrum(), pdf_pages)
+    elif format_flags["profile"]:
+        plot_profile_spectrum(I.GetXAxis(), I.GetMeanSpectrum(), pdf_pages)
 
+    write_summary_table(generate_table_data(I, x_lims, y_lims, image_stats),
+                        pdf_pages)
 
     pdf_pages.close()
     print("QC sussefully generated at: ", pdf_file_path)

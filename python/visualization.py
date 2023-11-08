@@ -265,5 +265,50 @@ def image_min_mz_number(Image, pdf, x_limits, y_limits):
                         "y axis",
                         pdf, x_limits, y_limits)
 
+def plot_centroid_spectrum(mz_axis, spectrum_data, pdf):
+    fig = plt.figure(figsize=[10, 6])
+    ax = plt.subplot(111)
+
+    ax.set_title('Averaged Centroid Mass Spectrum')
+    ax.set_xlabel('m/z')
+    ax.set_ylabel('Intensity')
+    ax.set_xlim(min(mz_axis).round(0), max(mz_axis).round(0))
+
+    ax.vlines(mz_axis, 0, spectrum_data, linewidth=0.8)
+
+    pdf.savefig(fig)
+    plt.close()
 
 
+def plot_profile_spectrum(mz_axis, spectrum_data, pdf):
+    fig = plt.figure(figsize=[10, 6])
+    ax = plt.subplot(111)
+
+    ax.set_title('Averaged Centroid Mass Spectrum')
+    ax.set_xlabel('m/z')
+    ax.set_ylabel('Intensity')
+    ax.set_xlim(min(mz_axis).round(0), max(mz_axis).round(0))
+
+    ax.plot(mz_axis, spectrum_data, linewidth=0.8)
+
+    pdf.savefig(fig)
+    plt.close()
+
+
+def write_summary_table(table, pdf):
+    # Create a figure and add the table
+    fig = plt.figure(figsize=[10, 10])
+    ax = plt.subplot(111)
+    ax.axis("off")  # Turn off axis
+    table = ax.table(cellText= table,
+                     colLabels=["Property", "Values"],
+                     loc="center", cellLoc="left")
+
+    # Style the table
+    table.auto_set_font_size(False)
+    table.set_fontsize(14)
+    table.scale(1.2, 1.2)  # Adjust table scale for better layout
+    # weird error, where some text is not getting passed
+
+    pdf.savefig(fig, bbox_inches="tight")
+    plt.close()
