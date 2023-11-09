@@ -143,8 +143,9 @@ def extract_calibrant_spectra(Image, cal_masses, subsample, mz_bin):
 
     return accu_list
 
-def collect_calibrant_stats(cal_spectra,cal_masses ):
-    """collects statistics of the calibrants. return a tuple of 4 lists:
+
+def collect_calibrant_stats(cal_spectra, cal_masses ):
+    """collects bulk statistics of the calibrants. return a tuple of 4 lists:
     0) binary mask if an entry for the calibrant was found
     1) the mostabundant peak in the specified bin
     2) the intensity-weighted mz value avergae in the bin

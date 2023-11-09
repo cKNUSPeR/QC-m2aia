@@ -24,6 +24,7 @@ def report_agnostic_QC(file_path: str, calfile_path: str):
     # get the image limits to crop and display only relevant parts
     x_lims, y_lims = evaluate_image_corners(I.GetMaskArray()[0])
 
+    # calculate the bulk
     cal_spectra = extract_calibrant_spectra(I, cal_masses, randomlist, mz_bin=0.03)
 
 
