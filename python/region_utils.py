@@ -18,7 +18,7 @@ def label_connected_region(Image):
     df = df.loc[df["annotation_value"] > 0]
 
     # number of regions found
-    max_regions = df['annotation_values'].max()
+    max_regions = df['annotation_value'].max()
 
     return df, labeled_image, max_regions
 
@@ -52,7 +52,8 @@ def write_region_tsv(df, path):
     file_name = path + "annotated_regions.tsv"
     df.to_csv(file_name, sep="\t", columns=["x","y","annotation_value"], index=False)
 
-def group_region_stat(labeled_image, index_image,label_nr, image_stats, keyword):
+
+def group_region_stat(labeled_image, index_image, label_nr, image_stats, keyword):
     """Groups the statistics of a region into a list of lists.
     Input:
     - labeled_image: An image-like array containing the regions labeled with an non-zero int
@@ -84,13 +85,21 @@ def group_region_stat(labeled_image, index_image,label_nr, image_stats, keyword)
 
     # loop over all segments
     for seg in range(1, label_nr+1):
+
         stat_nr_arr = np.asarray(image_stats[keyword])
-        ind_nr_array = np.assaray(image_stats["index_nr"])
+        ind_nr_array = np.asarray(image_stats["index_nr"])
 
-        pindex = ind_ar[np.where(lab_ar==seg)]+1 # extracion of pixel indices per segment
+        pindex = ind_ar[np.where(lab_ar==seg)] # extracion of pixel indices per segment
 
-        col = stat_nr_arr[np.in1d(ind_nr_array,pindex)] # extraction of tics from pixel index
+        col = stat_nr_arr[np.isin(ind_nr_array, pindex)] # extraction of tics from pixel index
         col = np.log2(col)
+
+        # debug blog
+        print(len(stat_nr_arr))
+        print(ind_ar)
+        print(pindex)
+        print(ind_nr_array[0:10])
+        print(len(col))
 
         stat_coll_boxplot.append(col)
         name_coll_boxplot.append(seg)
@@ -98,3 +107,52 @@ def group_region_stat(labeled_image, index_image,label_nr, image_stats, keyword)
     return name_coll_boxplot, stat_coll_boxplot
 
 
+def average_cont_spectra(Image, pixels):
+    """
+    Input:
+    - sequence of pixel indices
+    :return:
+    array of mz, array of intensities
+    """
+    # get lngth
+    n = len(pixels)
+
+    # get first element
+    mz, ints = Image.GetSpectrum(pixels[0])
+    ints = ints/n
+
+    # iterate over remaining elements
+    for idx in pixels[1:]:
+        _, intensity = Image.GetSpectrum(idx)
+        intensity = intensity / n
+        ints = np.add(ints,intensity)
+
+    return mz, ints
+
+def average_processed_spectra(Image, pixels):
+    """"""
+    # get the bin numbers (estimation by getting the largest number of spectra in the file)
+    n = len(pixels)
+    # get the mz value range
+    bins = [] # the left index of each mass bin
+
+    # collecting the binned ranges: as NaN
+    collector = pd.df()
+
+    # make a loop:
+    for idx in pixels:
+        # get the values from one pixel
+        mz, intensity = Image.GetSpectrum(idx)
+        # divide them over n
+        intensity = intensity / n
+
+        # add them as col to df
+        df["raw"] = pd.cut(df.data, bins)
+
+        # add the numbers to the collected df, make sure NaN + NaN is Nan
+        df["collected"] = df["collected"] + df
+
+
+    # filter out NaN values:
+
+    # retun df

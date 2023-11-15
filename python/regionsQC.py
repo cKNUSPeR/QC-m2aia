@@ -46,15 +46,17 @@ def report_regions_QC(I, # m2.imzMLReader (passing by ref allows faster computat
     image_regions(I.GetMaskArray()[0], region_image,
                   pdf_pages, x_lims, y_lims)
 
-    # do an intensity boxplot analysis
-    # 1 colloect the metrics
+    # intensity boxplot analysis
+    # collect the metrics
     image_stats = collect_image_stats(I, ['index_nr', 'tic_nr'])
 
-    # 2 get the data grouped by annotation column:
-    names_tic_bp, tic_bp = group_region_stat(region_image, I.GetMaskArray()[0], nr_regions, image_stats, "tic_nr")
+    # get the data grouped by annotation column:
+    names_tic_bp, tic_bp = group_region_stat(region_image, I.GetIndexArray()[0], nr_regions, image_stats, "tic_nr")
 
+    print(tic_bp)
+    # plot the grouped data in a boxplot
+    plot_boxplots(names_tic_bp, tic_bp, pdf_pages)
 
-        # freeranged scaling to 20
     plot_region_intesities()
 
     pdf_pages.close()
@@ -66,8 +68,6 @@ if True:
     report_regions_QC(I, r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\kidney_w_regions",
                          r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\kidney_annotated_regions.tsv")
 
-    report_regions_QC(I, r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\kidney_wo_regions",
-                      )
-
+   # report_regions_QC(I, r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\kidney_wo_regions",
 
 

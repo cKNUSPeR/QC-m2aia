@@ -109,7 +109,7 @@ def image_regions(Image, regionarray, pdf, x_limits, y_limits):
 
 def plot_region_intesities():
     #
-    return
+    return None
 
 def plot_basic_scatter(x,y,
                        title, x_lab, y_lab,
@@ -400,36 +400,33 @@ def plot_empty_peak(cal_mass, cal_name, pdf):
     plt.close()
 
 
-def create_boxplots():
+def plot_boxplots(name_boxplot, stat_boxplot, pdf):
     # 2DO: scaling adjusted to 20, also parametrized with titles, and mabe make a subfunction for plotting
-    len_b40 = len(name_coll_boxplot) // 40
-    if (len(name_coll_boxplot) % 40) > 0:
-        len_b40 = len_b40 + 1
+    len_b20 = len(name_boxplot) // 20
+    if (len(name_boxplot) % 20) > 0:
+        len_b20 = len_b20 + 1
 
     # plotting functions based on single-line or multi-line plotting:
-    if len_b40 > 1:
-        fig, ax = plt.subplots(len_b40, figsize=(10, len_b40 * 3))
+    if len_b20 > 1:
+        fig, ax = plt.subplots(len_b20, figsize=(10, len_b20 * 4))
         fig.suptitle('Boxplots of Pixelwise TIC per Segment')
 
-        for j in range(1, len_b40 + 1):  # change to 1-base index
-            ax[j - 1].boxplot(tic_coll_boxplot[(j - 1) * 40:40 * j],
-                              labels=name_coll_boxplot[(j - 1) * 40:40 * j])
+        for j in range(1, len_b20 + 1):  # change to 1-base index
+            ax[j - 1].boxplot(stat_boxplot[(j - 1) * 20:20 * j],
+                              labels=name_boxplot[(j - 1) * 20:20 * j])
             ax[j - 1].set_xlabel('Segmented Group')
             ax[j - 1].set_ylabel('log10 of Pixel TIC')
 
     else:
-        fig = plt.figure(figsize=[10, len_b40 * 3])
+        fig = plt.figure(figsize=[10, len_b20 * 4])
         ax = plt.subplot(111)
         ax.set_title('Boxplots of Pixelwise TIC per Segment')
 
-        ax.boxplot(tic_coll_boxplot,
-                   labels=name_coll_boxplot)
+        ax.boxplot(stat_boxplot[:],
+                   labels=name_boxplot)
         ax.set_xlabel('Segmented Group')
         ax.set_ylabel('log10 of Pixel TIC')
 
     plt.tight_layout()
-    if pdf_generate:
-        pdf_pages.savefig(fig)
-        plt.close()
-    else:
-        plt.show()
+    pdf.savefig(fig)
+    plt.close()
