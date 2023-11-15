@@ -29,54 +29,53 @@ def report_agnostic_QC(file_name: str):
     image_pixel_index(I.GetIndexArray()[0],
                            pdf_pages, x_lims, y_lims)
 
-    image_stats = collect_image_stats(I)
+    image_stats = collect_image_stats(I, ['index_nr', 'peak_nr', 'tic_nr', 'median_nr', 'max_int_nr', 'min_int_nr', 'max_mz_nr', 'min_mz_nr', 'max_abun_nr'])
 
     # visualize the feature numbers
-    plot_feature_number(image_stats[0],image_stats[1],
-                        pdf_pages)
-    image_feature_number(mask_bad_image(image_stats[0], image_stats[1], I.GetIndexArray()[0]),
+    plot_feature_number(image_stats, pdf_pages)
+    image_feature_number(image_stats, I.GetIndexArray()[0],
                          pdf_pages, x_lims, y_lims)
 
     # vis the tic metrics
-    plot_tic_number(image_stats[0], image_stats[2],
+    plot_tic_number(image_stats["index_nr"], image_stats["tic_nr"],
                         pdf_pages)
-    image_tic_number(mask_bad_image(image_stats[0], image_stats[2], I.GetIndexArray()[0]),
+    image_tic_number(mask_bad_image(image_stats["index_nr"], image_stats["tic_nr"], I.GetIndexArray()[0]),
                          pdf_pages, x_lims, y_lims)
 
     # vis the mab metrics
-    plot_max_abun_number(image_stats[0], image_stats[8],
+    plot_max_abun_number(image_stats["index_nr"], image_stats[8],
                     pdf_pages)
-    image_max_abun_number(mask_bad_image(image_stats[0], image_stats[8], I.GetIndexArray()[0]),
+    image_max_abun_number(mask_bad_image(image_stats["index_nr"], image_stats[8], I.GetIndexArray()[0]),
                      pdf_pages, x_lims, y_lims)
 
     # vis the median metrics
-    plot_median_number(image_stats[0], image_stats[3],
+    plot_median_number(image_stats["index_nr"], image_stats["median_nr"],
                     pdf_pages)
-    image_median_number(mask_bad_image(image_stats[0], image_stats[3], I.GetIndexArray()[0]),
+    image_median_number(mask_bad_image(image_stats["index_nr"], image_stats["median_nr"], I.GetIndexArray()[0]),
                      pdf_pages, x_lims, y_lims)
 
     # vis the max intensitsy metrics
-    plot_max_int_number(image_stats[0], image_stats[4],
+    plot_max_int_number(image_stats["index_nr"], image_stats[4],
                     pdf_pages)
-    image_max_int_number(mask_bad_image(image_stats[0], image_stats[4], I.GetIndexArray()[0]),
+    image_max_int_number(mask_bad_image(image_stats["index_nr"], image_stats[4], I.GetIndexArray()[0]),
                      pdf_pages, x_lims, y_lims)
 
     # vis the  min intensitsy metrics
-    plot_min_int_number(image_stats[0], image_stats[5],
+    plot_min_int_number(image_stats["index_nr"], image_stats[5],
                     pdf_pages)
-    image_min_int_number(mask_bad_image(image_stats[0], image_stats[5], I.GetIndexArray()[0]),
+    image_min_int_number(mask_bad_image(image_stats["index_nr"], image_stats[5], I.GetIndexArray()[0]),
                      pdf_pages, x_lims, y_lims)
 
     # vis the max intensitsy metrics
-    plot_max_mz_number(image_stats[0], image_stats[6],
+    plot_max_mz_number(image_stats["index_nr"], image_stats[6],
                         pdf_pages)
-    image_max_mz_number(mask_bad_image(image_stats[0], image_stats[6], I.GetIndexArray()[0]),
+    image_max_mz_number(mask_bad_image(image_stats["index_nr"], image_stats[6], I.GetIndexArray()[0]),
                          pdf_pages, x_lims, y_lims)
 
     # vis the  min intensitsy metrics
-    plot_min_mz_number(image_stats[0], image_stats[7],
+    plot_min_mz_number(image_stats["index_nr"], image_stats[7],
                         pdf_pages)
-    image_min_mz_number(mask_bad_image(image_stats[0], image_stats[7], I.GetIndexArray()[0]),
+    image_min_mz_number(mask_bad_image(image_stats["index_nr"], image_stats[7], I.GetIndexArray()[0]),
                          pdf_pages, x_lims, y_lims)
 
     # visualize the mean spectra

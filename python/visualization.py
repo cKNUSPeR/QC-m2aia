@@ -2,12 +2,15 @@ import m2aia as m2
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib.backends as mpb
 import random as rnd
 import statistics as stat
 import scipy.stats as SST
 import scipy.signal as SSI
 import skimage.measure as skim
 import pandas as pd
+
+from utils import *
 
 # custom colormaps with white backgrounds (via out-of-lower-bound)
 my_vir = cm.get_cmap('viridis').copy()
@@ -25,6 +28,11 @@ my_cw.set_under('purple')  # Color for values less than vmin
 my_cw.set_over('darkorange')
 my_cw.set_bad(color='white', alpha=1.0)
 
+
+def make_pdf_backend(report_path, title):
+    pdf_file_path = report_path + title + ".pdf"
+    pdf_pages = mpb.backend_pdf.PdfPages(pdf_file_path)
+    return pdf_pages
 
 def image_full_binary(Image, pdf):
     """plots a binary image of the imaging run with the origin coordinates
@@ -81,6 +89,28 @@ def image_pixel_index(Image, pdf, x_limits, y_limits):
     pdf.savefig(fig)
     plt.close()
 
+
+def image_regions(Image, regionarray, pdf, x_limits, y_limits):
+    """Images the annotated regions image as colorful blops-"""
+    fig = plt.figure(figsize=[7,5])
+    ax = plt.subplot(111)
+
+    ax.set_title('Connected Objects Analysis')
+    ax.set_xlabel('x axis')
+    ax.set_ylabel('y axis')
+
+    im = ax.imshow(regionarray, cmap=my_rbw, vmin=0.1, interpolation='none', origin='lower')
+                  # extent=[x_limits[0], x_limits[1], y_limits[0], y_limits[1]])
+
+    fig.colorbar(im, extend='min', format=lambda x, _: f"{int(x)}")
+
+    pdf.savefig(fig)
+    plt.close()
+
+def plot_region_intesities():
+    #
+    return
+
 def plot_basic_scatter(x,y,
                        title, x_lab, y_lab,
                        pdf):
@@ -119,147 +149,148 @@ def image_basic_heatmap(Image,
     plt.close()
 
 
-def plot_feature_number(indices, values, pdf):
+def plot_feature_number(image_stats, pdf):
     """plot a scatterplot for the number of feautes per pixel"""
-    plot_basic_scatter(indices, values,
+    plot_basic_scatter(image_stats["index_nr"], image_stats["peak_nr"],
                        "Number of Peaks per spectrum",
                        "Index of Spectrum",
                        "Number of Peaks",
                        pdf)
 
-def image_feature_number(Image, pdf, x_limits, y_limits):
+def image_feature_number(image_stats, index_image, pdf, x_limits, y_limits):
     """Images a heatmap of the number of features. Image cropped to size.
         Saves the plot to a pdf"""
-    image_basic_heatmap(Image,
+    image_basic_heatmap(mask_bad_image(image_stats["index_nr"], image_stats["peak_nr"], index_image),
                         'Number of Peak Projection',
                         "x axis",
                         "y axis",
                         pdf, x_limits, y_limits)
 
 
-def plot_tic_number(indices, values, pdf):
+def plot_tic_number(image_stats, pdf):
     """plot a scatterplot for the Total Ion Count per pixel"""
-    plot_basic_scatter(indices, values,
+    plot_basic_scatter(image_stats["index_nr"], image_stats["tic_nr"],
                        "TIC per spectrum",
                        "Index of Spectrum",
                        "Intensity",
                        pdf)
 
-def image_tic_number(Image, pdf, x_limits, y_limits):
+
+def image_tic_number(image_stats,index_image, pdf, x_limits, y_limits):
     """Images a heatmap of the TIC. Image cropped to size.
         Saves the plot to a pdf"""
-    image_basic_heatmap(Image,
+    image_basic_heatmap(mask_bad_image(image_stats["index_nr"], image_stats["tic_nr"], index_image),
                         'TIC per pixel projection',
                         "x axis",
                         "y axis",
                         pdf, x_limits, y_limits)
 
 
-def plot_max_abun_number(indices, values, pdf):
+def plot_max_abun_number(image_stats, pdf):
     """plot a scatterplot for the Highest abundance mz value per pixel"""
-    plot_basic_scatter(indices, values,
+    plot_basic_scatter(image_stats["index_nr"], image_stats["max_abun_nr"],
                        "Highest abundance mz value per spectrum",
                        "Index of spectrum",
                        "Intensity",
                        pdf)
 
 
-def image_max_abun_number(Image, pdf, x_limits, y_limits):
+def image_max_abun_number(image_stats, index_image, pdf, x_limits, y_limits):
     """Images a heatmap of the Highest abundance mz  value. Image cropped to size.
         Saves the plot to a pdf"""
-    image_basic_heatmap(Image,
+    image_basic_heatmap(mask_bad_image(image_stats["index_nr"], image_stats["max_abun_nr"], index_image),
                         'Highest abundance mz value per spectrum',
                         "x axis",
                         "y axis",
                         pdf, x_limits, y_limits)
 
-def plot_median_number(indices, values, pdf):
+def plot_median_number(image_stats, pdf):
     """plot a scatterplot for the median intensity per pixel"""
-    plot_basic_scatter(indices, values,
+    plot_basic_scatter(image_stats["index_nr"], image_stats["median_nr"],
                        "median intensity per spectrum",
                        "Index of Spectrum",
                        "Intensity",
                        pdf)
 
 
-def image_median_number(Image, pdf, x_limits, y_limits):
+def image_median_number(image_stats, index_image, pdf, x_limits, y_limits):
     """Images a heatmap of the median intensity. Image cropped to size.
         Saves the plot to a pdf"""
-    image_basic_heatmap(Image,
+    image_basic_heatmap(mask_bad_image(image_stats["index_nr"], image_stats["median_nr"], index_image),
                         'Median Intensity per Spectrum',
                         "x axis",
-                        "y axis",
+                        "y axis",mask_bad_image(image_stats["index_nr"], image_stats["median_nr"], index_image),
                         pdf, x_limits, y_limits)
 
 
-def plot_max_int_number(indices, values, pdf):
+def plot_max_int_number(image_stats, pdf):
     """plot a scatterplot for the maximal intensity per pixel"""
-    plot_basic_scatter(indices, values,
+    plot_basic_scatter(image_stats["index_nr"], image_stats["max_int_nr"],
                        "maximum intensity per spectrum",
                        "Index of spectrum",
                        "Intensity",
                        pdf)
 
-def image_max_int_number(Image, pdf, x_limits, y_limits):
+def image_max_int_number(image_stats, index_image, pdf, x_limits, y_limits):
     """Images a heatmap of the maximal intensity. Image cropped to size.
         Saves the plot to a pdf"""
-    image_basic_heatmap(Image,
+    image_basic_heatmap(mask_bad_image(image_stats["index_nr"], image_stats["max_int_nr"], index_image),
                         'maximum intensity per spectrum',
                         "x axis",
                         "y axis",
                         pdf, x_limits, y_limits)
 
-def plot_min_int_number(indices, values, pdf):
+def plot_min_int_number(image_stats, pdf):
     """plot a scatterplot for the minimal intensity per pixel"""
-    plot_basic_scatter(indices, values,
+    plot_basic_scatter(image_stats["index_nr"], image_stats["min_int_nr"],
                        "minimal intensity per spectrum",
                        "Index of spectrum",
                        "Intensity",
                        pdf)
 
 
-def image_min_int_number(Image, pdf, x_limits, y_limits):
+def image_min_int_number(image_stats, index_image, pdf, x_limits, y_limits):
     """Images a heatmap of the minimal intensity. Image cropped to size.
         Saves the plot to a pdf"""
-    image_basic_heatmap(Image,
+    image_basic_heatmap(mask_bad_image(image_stats["index_nr"], image_stats["min_int_nr"], index_image),
                         'minimal intensity per spectrum',
                         "x axis",
                         "y axis",
                         pdf, x_limits, y_limits)#
 
 
-def plot_max_mz_number(indices, values, pdf):
+def plot_max_mz_number(image_stats, pdf):
     """plot a scatterplot for the largest mz value per pixel"""
-    plot_basic_scatter(indices, values,
+    plot_basic_scatter(image_stats["index_nr"], image_stats["max_mz_nr"],
                        "largest mz value per spectrum",
                        "Index of spectrum",
                        "Intensity",
                        pdf)
 
 
-def image_max_mz_number(Image, pdf, x_limits, y_limits):
+def image_max_mz_number(image_stats, index_image, pdf, x_limits, y_limits):
     """Images a heatmap of the largest mz value. Image cropped to size.
         Saves the plot to a pdf"""
-    image_basic_heatmap(Image,
+    image_basic_heatmap(mask_bad_image(image_stats["index_nr"], image_stats["max_mz_nr"], index_image),
                         'largest mz value per spectrum',
                         "x axis",
                         "y axis",
                         pdf, x_limits, y_limits)
 
 
-def plot_min_mz_number(indices, values, pdf):
+def plot_min_mz_number(image_stats, pdf):
     """plot a scatterplot for the smallest mz value per pixel"""
-    plot_basic_scatter(indices, values,
+    plot_basic_scatter(image_stats["index_nr"], image_stats["min_mz_nr"],
                        "smallest mz value per spectrum",
                        "Index of spectrum",
                        "Intensity",
                        pdf)
 
 
-def image_min_mz_number(Image, pdf, x_limits, y_limits):
+def image_min_mz_number(image_stats, index_image, pdf, x_limits, y_limits):
     """Images a heatmap of the smallest mz value. Image cropped to size.
         Saves the plot to a pdf"""
-    image_basic_heatmap(Image,
+    image_basic_heatmap(mask_bad_image(image_stats["index_nr"], image_stats["min_mz_nr"], index_image),
                         'smallest mz value per spectrum',
                         "x axis",
                         "y axis",
@@ -312,3 +343,93 @@ def write_summary_table(table, pdf):
 
     pdf.savefig(fig, bbox_inches="tight")
     plt.close()
+
+
+def plot_calibrant_spectra(cal_masses, cal_names, cal_spectra, cal_mask, mab_list, wavg_list, dist, pdf):
+
+    for i in range(len(cal_masses)):
+        if cal_mask[i]:
+            plot_calibrant_spectrum(cal_masses[i], cal_names[i], cal_spectra[i],
+                            dist,
+                            mab_list[i], wavg_list[i],
+                            pdf)
+        else:
+            plot_empty_peak(cal_masses[i], cal_names[i], pdf)
+
+
+def plot_calibrant_spectrum(cal_mass, cal_name,    cal_spectrum,
+                            dist,
+                            mab, wavg,
+                            pdf):
+    """ Cal spectrum is the sliced variable of cal_spectra[i]
+        # differentiante the plotting :
+    # 1) with profile or centriod  map&wavg
+    # 2) only data points + map&wavg
+    # 2.2) zoom of 150% around both metrics with only data points
+    # 3) zoom on minimal and maximal data points ()"""
+    fig = plt.figure(figsize=[7, 5])
+    ax = plt.subplot(111)
+
+    ax.set_title(f'Spectrum of {cal_mass} ({cal_name})')
+    ax.set_xlabel('m/z')
+    ax.set_ylabel('Intensity')
+    ax.set_xlim(cal_mass - dist, cal_mass + dist)
+    ax.ticklabel_format(useOffset=False, )
+    ax.ticklabel_format(axis="y", style='sci', scilimits=(0, 0))
+
+    ax.scatter(cal_spectrum[0], cal_spectrum[1], s=4, zorder=-1)
+    ax.set_rasterization_zorder(0)
+
+    ax.axvline(mab, color='green', ls="--")
+    ax.axvline(cal_mass, c='r', ls=(0, (1, 3)))
+    ax.axvline(wavg, c='purple', ls="-.")
+
+    pdf.savefig(fig)
+    plt.close()
+
+
+def plot_empty_peak(cal_mass, cal_name, pdf):
+    fig = plt.figure(figsize=[7, 5])
+    ax = plt.subplot(111)
+    ax.set_title(f'Spectrum of {cal_mass} ({cal_name})')
+    ax.set_xlabel('m/z')
+    ax.set_ylabel('Intensity')
+    ax.text(cal_mass, 0, f'Peak for {cal_mass} m/z \n not found',
+            ha='center', fontsize=12)
+    pdf.savefig(fig)
+    plt.close()
+
+
+def create_boxplots():
+    # 2DO: scaling adjusted to 20, also parametrized with titles, and mabe make a subfunction for plotting
+    len_b40 = len(name_coll_boxplot) // 40
+    if (len(name_coll_boxplot) % 40) > 0:
+        len_b40 = len_b40 + 1
+
+    # plotting functions based on single-line or multi-line plotting:
+    if len_b40 > 1:
+        fig, ax = plt.subplots(len_b40, figsize=(10, len_b40 * 3))
+        fig.suptitle('Boxplots of Pixelwise TIC per Segment')
+
+        for j in range(1, len_b40 + 1):  # change to 1-base index
+            ax[j - 1].boxplot(tic_coll_boxplot[(j - 1) * 40:40 * j],
+                              labels=name_coll_boxplot[(j - 1) * 40:40 * j])
+            ax[j - 1].set_xlabel('Segmented Group')
+            ax[j - 1].set_ylabel('log10 of Pixel TIC')
+
+    else:
+        fig = plt.figure(figsize=[10, len_b40 * 3])
+        ax = plt.subplot(111)
+        ax.set_title('Boxplots of Pixelwise TIC per Segment')
+
+        ax.boxplot(tic_coll_boxplot,
+                   labels=name_coll_boxplot)
+        ax.set_xlabel('Segmented Group')
+        ax.set_ylabel('log10 of Pixel TIC')
+
+    plt.tight_layout()
+    if pdf_generate:
+        pdf_pages.savefig(fig)
+        plt.close()
+    else:
+        plt.show()

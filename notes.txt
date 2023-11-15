@@ -1,1 +1,12 @@
 implement hierarchical clustering in iConverse
+
+
+Calibrant QC:
+
+pass M2.Image, location for pdf, location for tsv file
+
+    make pdf
+
+    load tsv infos
+
+

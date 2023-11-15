@@ -97,13 +97,13 @@ def find_nearest(array, value):
 
 
 
-def read_calibrants(filepath: str) -> tuple(list,list):
+def read_calibrants(filepath: str):
     """Reads calibrant files and gives a list of name and thr. mz values
     INVARIANTS: Needs a header column with 'Name' and a col with 'Theoretical m/z'."""
     cal = pd.read_csv(filepath, sep=';', header=0)
     cal_masses = cal["Theoretical m/z"].tolist()
     cal_names = cal["Name"].tolist()
-    return (cal_names,cal_masses)
+    return cal_names, cal_masses
 
 def extract_calibrant_spectra(Image, cal_masses, subsample, mz_bin):
     """Read the list of cal masses and collects the spectral data in the given mz bin."""
@@ -149,11 +149,11 @@ def collect_calibrant_stats(cal_spectra, cal_masses ):
     0) binary mask if an entry for the calibrant was found
     1) the mostabundant peak in the specified bin
     2) the intensity-weighted mz value avergae in the bin
-    3) the nearest local maxima to the calibrant mass."""
+    decrep.) the nearest local maxima to the calibrant mass."""
     cal_mass_mask = []
     accu_mab_list = []
     accu_center_list = []
-    accu_locmax_list = []
+    #accu_locmax_list = []
 
     # extraction of most Abundant PEaks and peak centers and theeir validity in mask for cal_masses
     for i in range(len(cal_masses)):
@@ -163,26 +163,77 @@ def collect_calibrant_stats(cal_spectra, cal_masses ):
             # peak with hightest intensity
             most_abundant_peak = cal_spectra[i][0][np.where(cal_spectra[i][1] == max(cal_spectra[i][1]))][0]
             # weighted average of mz values weighted by their intensity
-            center, _ = np.average(cal_spectra[i][0], weight=cal_spectra[i][1])
+            print(cal_spectra[i][0])
+            print(type(cal_spectra[i][1]))
+            center, _ = np.average(cal_spectra[i][0], weights=cal_spectra[i][1])
             # nearest local maxima of intensities
-            loc_max_ind = argrelextrema(cal_spectra[i][1], np.greater)
-            loc_max = find_nearest(cal_spectra[i][0][loc_max_ind][0])
+            # = argrelextrema(cal_spectra[i][1], np.greater)
+            #loc_max = find_nearest(cal_spectra[i][0][loc_max_ind][0])
 
             accu_mab_list.append(most_abundant_peak)
             accu_center_list.append(center)
-            accu_locmax_list.append(loc_max)
+            #accu_locmax_list.append(loc_max)
         else:
             cal_mass_mask.append(False)
             accu_mab_list.append(0)  # mab is set to 0 for not found peaks to retain list shape
             accu_center_list.append(0)  # center is set to 0 for not found peaks
-            accu_locmax_list.append(0)
+            #accu_locmax_list.append(0)
+    return cal_mass_mask, accu_mab_list, accu_center_list
 
+def calc_accuraciues(found_mz, theo_mz, mask):
+    """Calculate the ppm accuracy of a list of found peaks comparative to a set of theroetical masses and a binary mask"""
+    ppm = []
+    for o, t, m in zip(found_mz, theo_mz, mask):
+        if m:
+            ppm.append(np.abs((o - t) / t * 10 ** 6))
+    return ppm
 
 
 # M2aia-dependant tools
 
-#2DO: maybe implement a coverage here aswell
-def collect_image_stats(Image # m2aia-ImzML Reader object
+
+
+def collect_image_stats(Image, statistic_keywords):
+    """ Expensive function to call. iterates over the full spectrum and returns the specified metrics.
+    Input:
+        -Image: a m2aia ImzML reader
+        -statistic_keywords: a controlled set of keyword strings
+            The following keywords are supported:
+            ['index_nr', 'peak_nr', 'tic_nr', 'median_nr', 'max_int_nr', 'min_int_nr', 'max_mz_nr', 'min_mz_nr', 'max_abun_nr']
+
+    Output:
+        -dict[keyword] -> tuple: a dict with tuples of the required statistic per pixel.
+    """
+    # Create a dictionary to store the results for each statistic
+    statistics_result = {keyword: () for keyword in statistic_keywords}
+
+    for ind, mass, inten in Image.SpectrumIterator():  # loop to run over the full imzML dataset
+        for keyword in statistic_keywords:
+            if keyword == 'index_nr':
+                statistics_result[keyword] += (ind + 1,)
+            elif keyword == 'peak_nr':
+                statistics_result[keyword] += (len(inten),)
+            elif keyword == 'tic_nr':
+                statistics_result[keyword] += (sum(inten),)
+            elif keyword == 'median_nr':
+                statistics_result[keyword] += (stat.median(inten),)
+            elif keyword == 'max_int_nr':
+                statistics_result[keyword] += (max(inten),)
+            elif keyword == 'min_int_nr':
+                statistics_result[keyword] += (min(inten),)
+            elif keyword == 'max_mz_nr':
+                statistics_result[keyword] += (max(mass),)
+            elif keyword == 'min_mz_nr':
+                statistics_result[keyword] += (min(mass),)
+            elif keyword == 'max_abun_nr':
+                max_abun_index = np.where(inten == max(inten))[0][0]
+                statistics_result[keyword] += (mass[max_abun_index],)
+
+    return statistics_result
+
+
+#decrepateted
+def old_collect_image_stats(Image # m2aia-ImzML Reader object
                         ):
     """ Expensive function to call. iterates over full spectrum and returns the following metrics:
     0) the index of each pixel, useful for plotting
