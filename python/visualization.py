@@ -1,14 +1,3 @@
-import m2aia as m2
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import matplotlib.backends as mpb
-import random as rnd
-import statistics as stat
-import scipy.stats as SST
-import scipy.signal as SSI
-import skimage.measure as skim
-import pandas as pd
 
 from utils import *
 
@@ -34,6 +23,7 @@ def make_pdf_backend(report_path, title):
     pdf_pages = mpb.backend_pdf.PdfPages(pdf_file_path)
     return pdf_pages
 
+
 def image_full_binary(Image, pdf):
     """plots a binary image of the imaging run with the origin coordinates
         Saves this plot to a pdf."""
@@ -50,6 +40,7 @@ def image_full_binary(Image, pdf):
     pdf.savefig(fig)
     plt.close()
 
+
 def image_cropped_binary(Image, pdf, x_limits, y_limits):
     """generates a plot of binary image cropped to size.
         Saves the plot to a pdf"""
@@ -59,8 +50,8 @@ def image_cropped_binary(Image, pdf, x_limits, y_limits):
 
     ax.set_xlabel('x axis')
     ax.set_ylabel('y axis')
-    ax.set_xlim(x_limits[0],x_limits[1])
-    ax.set_ylim(y_limits[0],y_limits[1])
+    ax.set_xlim(x_limits[0], x_limits[1])
+    ax.set_ylim(y_limits[0], y_limits[1])
     ax.set_title('Cropped view of binary image within pixel limits')
     ax.imshow(Image,
               cmap=my_vir, vmin=0.1,
@@ -92,7 +83,7 @@ def image_pixel_index(Image, pdf, x_limits, y_limits):
 
 def image_regions(Image, regionarray, pdf, x_limits, y_limits):
     """Images the annotated regions image as colorful blops-"""
-    fig = plt.figure(figsize=[7,5])
+    fig = plt.figure(figsize=[7, 5])
     ax = plt.subplot(111)
 
     ax.set_title('Connected Objects Analysis')
@@ -100,22 +91,24 @@ def image_regions(Image, regionarray, pdf, x_limits, y_limits):
     ax.set_ylabel('y axis')
 
     im = ax.imshow(regionarray, cmap=my_rbw, vmin=0.1, interpolation='none', origin='lower')
-                  # extent=[x_limits[0], x_limits[1], y_limits[0], y_limits[1]])
+    # extent=[x_limits[0], x_limits[1], y_limits[0], y_limits[1]])
 
     fig.colorbar(im, extend='min', format=lambda x, _: f"{int(x)}")
 
     pdf.savefig(fig)
     plt.close()
 
+
 def plot_region_intesities():
     #
     return None
 
-def plot_basic_scatter(x,y,
+
+def plot_basic_scatter(x, y,
                        title, x_lab, y_lab,
                        pdf):
     """makes a simple scatterplot, functional template"""
-    fig = plt.figure(figsize=[7,5])
+    fig = plt.figure(figsize=[7, 5])
     ax = plt.subplot(111)
 
     ax.set_title(title)
@@ -128,6 +121,7 @@ def plot_basic_scatter(x,y,
 
     pdf.savefig(fig)
     plt.close()
+
 
 def image_basic_heatmap(Image,
                         title, x_lab, y_lab,
@@ -157,6 +151,7 @@ def plot_feature_number(image_stats, pdf):
                        "Number of Peaks",
                        pdf)
 
+
 def image_feature_number(image_stats, index_image, pdf, x_limits, y_limits):
     """Images a heatmap of the number of features. Image cropped to size.
         Saves the plot to a pdf"""
@@ -176,7 +171,7 @@ def plot_tic_number(image_stats, pdf):
                        pdf)
 
 
-def image_tic_number(image_stats,index_image, pdf, x_limits, y_limits):
+def image_tic_number(image_stats, index_image, pdf, x_limits, y_limits):
     """Images a heatmap of the TIC. Image cropped to size.
         Saves the plot to a pdf"""
     image_basic_heatmap(mask_bad_image(image_stats["index_nr"], image_stats["tic_nr"], index_image),
@@ -204,6 +199,7 @@ def image_max_abun_number(image_stats, index_image, pdf, x_limits, y_limits):
                         "y axis",
                         pdf, x_limits, y_limits)
 
+
 def plot_median_number(image_stats, pdf):
     """plot a scatterplot for the median intensity per pixel"""
     plot_basic_scatter(image_stats["index_nr"], image_stats["median_nr"],
@@ -219,7 +215,7 @@ def image_median_number(image_stats, index_image, pdf, x_limits, y_limits):
     image_basic_heatmap(mask_bad_image(image_stats["index_nr"], image_stats["median_nr"], index_image),
                         'Median Intensity per Spectrum',
                         "x axis",
-                        "y axis",mask_bad_image(image_stats["index_nr"], image_stats["median_nr"], index_image),
+                        "y axis",
                         pdf, x_limits, y_limits)
 
 
@@ -231,6 +227,7 @@ def plot_max_int_number(image_stats, pdf):
                        "Intensity",
                        pdf)
 
+
 def image_max_int_number(image_stats, index_image, pdf, x_limits, y_limits):
     """Images a heatmap of the maximal intensity. Image cropped to size.
         Saves the plot to a pdf"""
@@ -239,6 +236,7 @@ def image_max_int_number(image_stats, index_image, pdf, x_limits, y_limits):
                         "x axis",
                         "y axis",
                         pdf, x_limits, y_limits)
+
 
 def plot_min_int_number(image_stats, pdf):
     """plot a scatterplot for the minimal intensity per pixel"""
@@ -256,7 +254,7 @@ def image_min_int_number(image_stats, index_image, pdf, x_limits, y_limits):
                         'minimal intensity per spectrum',
                         "x axis",
                         "y axis",
-                        pdf, x_limits, y_limits)#
+                        pdf, x_limits, y_limits)  #
 
 
 def plot_max_mz_number(image_stats, pdf):
@@ -296,6 +294,7 @@ def image_min_mz_number(image_stats, index_image, pdf, x_limits, y_limits):
                         "y axis",
                         pdf, x_limits, y_limits)
 
+
 def plot_centroid_spectrum(mz_axis, spectrum_data, pdf):
     fig = plt.figure(figsize=[10, 6])
     ax = plt.subplot(111)
@@ -315,7 +314,7 @@ def plot_profile_spectrum(mz_axis, spectrum_data, pdf):
     fig = plt.figure(figsize=[10, 6])
     ax = plt.subplot(111)
 
-    ax.set_title('Averaged Centroid Mass Spectrum')
+    ax.set_title('Averaged Profile Mass Spectrum')
     ax.set_xlabel('m/z')
     ax.set_ylabel('Intensity')
     ax.set_xlim(min(mz_axis).round(0), max(mz_axis).round(0))
@@ -331,7 +330,7 @@ def write_summary_table(table, pdf):
     fig = plt.figure(figsize=[10, 10])
     ax = plt.subplot(111)
     ax.axis("off")  # Turn off axis
-    table = ax.table(cellText= table,
+    table = ax.table(cellText=table,
                      colLabels=["Property", "Values"],
                      loc="center", cellLoc="left")
 
@@ -346,18 +345,23 @@ def write_summary_table(table, pdf):
 
 
 def plot_calibrant_spectra(cal_masses, cal_names, cal_spectra, cal_mask, mab_list, wavg_list, dist, pdf):
+    # differentiante the plotting :
+    # 1) with profile or centriod  map&wavg
+    # 2) only data points + map&wavg
+    # 2.2) zoom of 150% around both metrics with only data points
+    # 3) zoom on minimal and maximal data points ()
 
     for i in range(len(cal_masses)):
         if cal_mask[i]:
             plot_calibrant_spectrum(cal_masses[i], cal_names[i], cal_spectra[i],
-                            dist,
-                            mab_list[i], wavg_list[i],
-                            pdf)
+                                    dist,
+                                    mab_list[i], wavg_list[i],
+                                    pdf)
         else:
             plot_empty_peak(cal_masses[i], cal_names[i], pdf)
 
 
-def plot_calibrant_spectrum(cal_mass, cal_name,    cal_spectrum,
+def plot_calibrant_spectrum(cal_mass, cal_name, cal_spectrum,
                             dist,
                             mab, wavg,
                             pdf):
@@ -430,3 +434,41 @@ def plot_boxplots(name_boxplot, stat_boxplot, pdf):
     plt.tight_layout()
     pdf.savefig(fig)
     plt.close()
+
+
+def plot_regions_average(Image, format_dict, regions_image, region_number, pdf):
+    """plot the average spectrum of each region of the regioned image as a spectrum plot.
+    
+    Input: 
+        - image
+        - format_flag
+        - ragions_image
+        
+    Output:
+        plot of mean in region, adapted to format flag. 
+        Also, additional plotting of full mean spectrum in background (for later)
+    """
+
+    lab_ar = np.reshape(regions_image, -1)
+    ind_ar = np.reshape(Image.GetIndexArray()[0], -1)
+
+    for index in range(1, region_number + 1):
+        # get the index per segment
+        pindex = ind_ar[np.where(lab_ar == index)]  # extracion of pixel indices per segment
+
+        # make averages
+        if format_dict["continuous"]:
+            avg_mz, avg_ints = average_cont_spectra(Image, pindex)
+
+            if format_dict["centroid"]:
+                plot_centroid_spectrum(avg_mz, avg_ints, pdf)
+            elif format_dict["profile"]:
+                plot_profile_spectrum(avg_mz, avg_ints, pdf)
+
+        elif format_dict["processed"]:
+            avg_mz, avg_ints = average_processed_spectra(Image, pindex)
+
+            if format_dict["centroid"]:
+                plot_centroid_spectrum(avg_mz, avg_ints, pdf)
+            elif format_dict["profile"]:
+                plot_profile_spectrum(avg_mz, avg_ints, pdf)

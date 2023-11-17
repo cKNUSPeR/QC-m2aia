@@ -1,5 +1,6 @@
 
 # namespace and import declaration
+import matplotlib.backends as mpb
 import m2aia as m2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -94,7 +95,6 @@ def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return array[idx]
-
 
 
 def read_calibrants(filepath: str):
@@ -192,6 +192,173 @@ def calc_accuraciues(found_mz, theo_mz, mask):
 # M2aia-dependant tools
 
 
+def label_connected_region(Image):
+    labeled_image = skim.label(Image.GetMaskArray()[0], connectivity=1)
+
+    # shape of image array:
+    rows, cols = labeled_image.shape
+    # get a meshed grid to make x-y accesible
+    x_coords, y_coords = np.meshgrid(range(cols), range(rows))
+
+    # make a dataframe
+    df = pd.DataFrame({'x': x_coords.flatten(), 'y': y_coords.flatten(), 'annotation_value': labeled_image.flatten()})
+    # remove 0-entries (they represent empty pixels)
+    df = df.loc[df["annotation_value"] > 0]
+
+    # number of regions found
+    max_regions = df['annotation_value'].max()
+
+    return df, labeled_image, max_regions
+
+
+def parse_regionfile(file, annotation_group, x_lims, y_lims):
+    """parses the regions tsv file. Assumes that the regions are annotated
+    within the coordinates of the imaging file (the point of origin is at (0,0))."""
+
+    # mark invariants of "x", "y" , "annotation"
+    df = pd.read_csv(file, sep="\t", header=0)
+
+    # translate the annotation to values starting from 1
+    df['annotation_values'] = pd.factorize(df[annotation_group])[0] + 1
+
+    # the maximum number of regions (counting starts at 1)
+    max_regions = df['annotation_values'].max()
+
+    # set up empty array with xlims any ylims ranges
+    labeled_image = np.zeros((1 + y_lims[1] - y_lims[0], 1 + x_lims[1] - x_lims[0]))  # 1-indexed for inclusiveness
+
+    # fill the labeled image with the annotations:
+    for index, row in df.iterrows():
+        x, y = row['x'], row['y']
+        labeled_image[y, x] = row['annotation_values']  # Set pixel to annotation group
+
+    return df, labeled_image, max_regions
+
+
+def write_region_tsv(df, path):
+    """writes a region pd.df to a tsv for reimport later."""
+    file_name = path + "annotated_regions.tsv"
+    df.to_csv(file_name, sep="\t", columns=["x", "y", "annotation_value"], index=False)
+
+
+def group_region_stat(labeled_image, index_image, label_nr, image_stats, keyword):
+    """Groups the statistics of a region into a list of lists.
+    Input:
+    - labeled_image: An image-like array containing the regions labeled with a non-zero int
+    - index_image: An image-like array containing the pixel index
+    - image_stats: a dict of image statistics per pixel as tuple, accessible by keywords
+    -keyword: the keyword for which data is collected (eg. tic_nr)
+    - label_nr: the number of labeled regions
+
+    Output:
+    - tuple(list[int], list[list]: Tuple with names and statistics:
+    ordered in list order of keywords (currently hardcoded)
+
+    """
+
+    # linear reshaping of pixel index image and segmented image
+    lab_ar = np.reshape(labeled_image, -1)
+    ind_ar = np.reshape(index_image, -1)
+
+    # arrayization of pixel index counting and TICperPixel counting
+    # via np.asarray(image_stats["index_nr"]), best to do inplace
+
+    # collectors for plotable boxplot data
+    # collectors for plotable boxplot data
+    stat_coll_boxplot = []
+    name_coll_boxplot = []
+
+    # loop over all segments
+    for seg in range(1, label_nr + 1):
+        stat_nr_arr = np.asarray(image_stats[keyword])
+        ind_nr_array = np.asarray(image_stats["index_nr"])
+
+        pindex = ind_ar[np.where(lab_ar == seg)]  # extracion of pixel indices per segment
+
+        col = stat_nr_arr[np.isin(ind_nr_array, pindex)]  # extraction of tics from pixel index
+        col = np.log2(col)
+
+        stat_coll_boxplot.append(col)
+        name_coll_boxplot.append(seg)
+
+    return name_coll_boxplot, stat_coll_boxplot
+
+
+def average_cont_spectra(Image, pixels):
+    """
+    Input:
+    - sequence of pixel indices
+    :return:
+    array of mz, array of intensities
+    """
+    # get lngth
+    n = len(pixels)
+
+    # get first element
+    mz, ints = Image.GetSpectrum(pixels[0])
+    ints = ints / n
+
+    # iterate over remaining elements
+    for idx in pixels[1:]:
+        _, intensity = Image.GetSpectrum(idx)
+        intensity = intensity / n
+        ints = np.add(ints, intensity)
+
+    return mz, ints
+
+
+def average_processed_spectra(Image, pixels):
+    """Averages processed spectra by their pixels.
+    Calculates a mz window with start, end and stepsize and bins the data into this.
+    Masses are returned to the head of their respective bin.
+    Input:
+        - Image: an m2aia imzML reader
+        - pixels: a sequence of pixel indices
+    returns:
+        mzs, ints
+        two arrays with mz values and intensity values of the respective average
+    """
+    # get the normalization numbers
+    n = len(pixels)
+
+    # get the mz value range
+    mz_start, mz_end = min(Image.GetXAxis()) - 0.0001, max(Image.GetXAxis())  # minimum is reduced by a bit.
+
+    # get the number of bins (estimation by getting the largest number of spectra in the file)
+    bin_nr = 1  # the left index of each mass bin
+    for ids in pixels:
+        cbin_nr = Image.GetSpectrumDepth(ids)
+        if cbin_nr > bin_nr:
+            bin_nr = cbin_nr
+
+    # binning is enhanced by factor of 10, to counteract spectral pixelation
+    bin_nr = bin_nr * 10
+
+    # set up the collection df for the binned ranges:
+    bins = np.linspace(mz_start, mz_end, bin_nr)
+
+    full_df = pd.DataFrame({'mz_bins': bins})
+    full_df["collect"] = np.nan
+
+    # make a loop:
+    for idx in pixels:
+        # mzs and ints of the pixel
+        mz, ints = Image.GetSpectrum(idx)
+
+        # make andbin the dat in a dataframe
+        little_df = pd.DataFrame({'mz': mz, "intensity": ints})
+        little_df['binned'] = pd.cut(mz, bins)
+
+        # means of grouped bins and normalized to pixels
+        full_df["single"] = little_df.groupby(['binned'])['intensity'].mean() / n
+        full_df["collect"] = full_df[['collect', 'single']].sum(axis=1, min_count=1)
+
+    # filter out NaN values:
+    full_df = full_df.dropna(subset=['collect'])
+
+    # return as arrays
+    return full_df['mz_bins'].to_numpy(), full_df["collect"].to_numpy()
+
 
 def collect_image_stats(Image, statistic_keywords):
     """ Expensive function to call. iterates over the full spectrum and returns the specified metrics.
@@ -279,17 +446,17 @@ def generate_table_data(Image, x_limits, y_limits, im_stats):
         ["Number of unrecorded Pixels:", str(np.abs(np.product(Image.GetShape()) - Image.GetNumberOfSpectra()))],
         ["Recorded x-range:", str(x_limits)],
         ["Recorded y-range:", str(y_limits)],
-        ["Number of individual mz features:", str(np.sum(im_stats[1]))],
-        ["Mean TIC ± sd:", str(f"{int(stat.mean(im_stats[2]))} ± {int(stat.stdev(im_stats[2]))}")],
-        ["Median TIC ± MAD:", str(f"{int(stat.median(im_stats[2]))} ± {int(SST.median_abs_deviation(im_stats[2]))}")],
-        ["Mean number of mz features per spectrum ± sd:", str(f"{int(stat.mean(im_stats[1]))} ± {int(stat.stdev(im_stats[1]))}")],
-        ["Median number of mz features per spectrum ± MAD:", str(f"{int(stat.median(im_stats[1]))} ± {int(SST.median_abs_deviation(im_stats[1]))}")],
-        ["Range of median intensities per pixel:", str((min(im_stats[3]), max(im_stats[3])))],
-        ["Range of Maximal Intensity per pixel:", str((min(im_stats[4]), max(im_stats[4])))],
-        ["Range of most abundant mz per pixel:", str((min(im_stats[8]), max(im_stats[8])))],
-        ["mz range:", str((min(im_stats[7]), max(im_stats[6])))],
+        ["Number of individual mz features:", str(np.sum(im_stats['peak_nr']))],
+        ["Mean TIC ± sd:", str(f"{int(stat.mean(im_stats['tic_nr']))} ± {int(stat.stdev(im_stats['tic_nr']))}")],
+        ["Median TIC ± MAD:", str(f"{int(stat.median(im_stats['tic_nr']))} ± {int(SST.median_abs_deviation(im_stats['tic_nr']))}")],
+        ["Mean number of mz features per spectrum ± sd:", str(f"{int(stat.mean(im_stats['peak_nr']))} ± {int(stat.stdev(im_stats['peak_nr']))}")],
+        ["Median number of mz features per spectrum ± MAD:", str(f"{int(stat.median(im_stats['peak_nr']))} ± {int(SST.median_abs_deviation(im_stats['peak_nr']))}")],
+        ["Range of median intensities per pixel:", str((min(im_stats['median_nr']), max(im_stats['median_nr'])))],
+        ["Range of Maximal Intensity per pixel:", str((min(im_stats['max_int_nr']), max(im_stats['max_int_nr'])))],
+        ["Range of most abundant mz per pixel:", str((min(im_stats['max_abun_nr']), max(im_stats['max_abun_nr'])))],
+        ["mz range:", str((min(im_stats['min_mz_nr']), max(im_stats['max_mz_nr'])))],
         ["Spacing:", str(Image.GetSpacing())],
         ["m/z Bins:", str(Image.GetXAxisDepth())],
-        ["Intensity range:", str((min(im_stats[5]), max(im_stats[4])))],
+        ["Intensity range:", str((min(im_stats['min_int_nr']), max(im_stats['max_int_nr'])))],
         ]
         return table

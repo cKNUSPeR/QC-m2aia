@@ -7,7 +7,7 @@ from cal_utils import *
 def report_calibrant_QC(I, # m2.imzMLReader (passing by ref allows faster computation)
                         file_path: str,  # path for output file
                         calfile_path: str,  # path to tsv file for calibrants
-                        dist
+                        dist: float # allowed distance to check for signals around thoe. masses
                         ):
 
     #  read in the calibrants
@@ -15,7 +15,6 @@ def report_calibrant_QC(I, # m2.imzMLReader (passing by ref allows faster comput
 
     # Create a PDF file to save the figures
     pdf_pages = make_pdf_backend(file_path, "calibrant_QC")
-
 
     #Make a subsample to test accuracies on
     randomlist = make_subsample(I.GetNumberOfSpectra(), 0.01)
