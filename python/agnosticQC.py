@@ -13,9 +13,6 @@ def report_agnostic_qc(I,  # m2.imzMLReader (passing by ref allows faster comput
     # get the image limits to crop and display only relevant parts
     x_lims, y_lims = evaluate_image_corners(I.GetMaskArray()[0])
 
-    # get a randomlist for computationally intense tasks.
-    randomlist = make_subsample(I.GetNumberOfSpectra(), 0.01)
-
     image_full_binary(I.GetMaskArray()[0],
                       pdf_pages)
 

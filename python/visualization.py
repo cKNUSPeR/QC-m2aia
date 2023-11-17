@@ -344,65 +344,6 @@ def write_summary_table(table, pdf):
     plt.close()
 
 
-def plot_calibrant_spectra(cal_masses, cal_names, cal_spectra, cal_mask, mab_list, wavg_list, dist, pdf):
-    # differentiante the plotting :
-    # 1) with profile or centriod  map&wavg
-    # 2) only data points + map&wavg
-    # 2.2) zoom of 150% around both metrics with only data points
-    # 3) zoom on minimal and maximal data points ()
-
-    for i in range(len(cal_masses)):
-        if cal_mask[i]:
-            plot_calibrant_spectrum(cal_masses[i], cal_names[i], cal_spectra[i],
-                                    dist,
-                                    mab_list[i], wavg_list[i],
-                                    pdf)
-        else:
-            plot_empty_peak(cal_masses[i], cal_names[i], pdf)
-
-
-def plot_calibrant_spectrum(cal_mass, cal_name, cal_spectrum,
-                            dist,
-                            mab, wavg,
-                            pdf):
-    """ Cal spectrum is the sliced variable of cal_spectra[i]
-        # differentiante the plotting :
-    # 1) with profile or centriod  map&wavg
-    # 2) only data points + map&wavg
-    # 2.2) zoom of 150% around both metrics with only data points
-    # 3) zoom on minimal and maximal data points ()"""
-    fig = plt.figure(figsize=[7, 5])
-    ax = plt.subplot(111)
-
-    ax.set_title(f'Spectrum of {cal_mass} ({cal_name})')
-    ax.set_xlabel('m/z')
-    ax.set_ylabel('Intensity')
-    ax.set_xlim(cal_mass - dist, cal_mass + dist)
-    ax.ticklabel_format(useOffset=False, )
-    ax.ticklabel_format(axis="y", style='sci', scilimits=(0, 0))
-
-    ax.scatter(cal_spectrum[0], cal_spectrum[1], s=4, zorder=-1)
-    ax.set_rasterization_zorder(0)
-
-    ax.axvline(mab, color='green', ls="--")
-    ax.axvline(cal_mass, c='r', ls=(0, (1, 3)))
-    ax.axvline(wavg, c='purple', ls="-.")
-
-    pdf.savefig(fig)
-    plt.close()
-
-
-def plot_empty_peak(cal_mass, cal_name, pdf):
-    fig = plt.figure(figsize=[7, 5])
-    ax = plt.subplot(111)
-    ax.set_title(f'Spectrum of {cal_mass} ({cal_name})')
-    ax.set_xlabel('m/z')
-    ax.set_ylabel('Intensity')
-    ax.text(cal_mass, 0, f'Peak for {cal_mass} m/z \n not found',
-            ha='center', fontsize=12)
-    pdf.savefig(fig)
-    plt.close()
-
 
 def plot_boxplots(name_boxplot, stat_boxplot, pdf):
     # 2DO: scaling adjusted to 20, also parametrized with titles, and mabe make a subfunction for plotting
@@ -472,3 +413,64 @@ def plot_regions_average(Image, format_dict, regions_image, region_number, pdf):
                 plot_centroid_spectrum(avg_mz, avg_ints, pdf)
             elif format_dict["profile"]:
                 plot_profile_spectrum(avg_mz, avg_ints, pdf)
+
+# plot functions for calibrant QC
+
+def plot_calibrant_spectra(cal_masses, cal_names, cal_spectra, cal_mask, mab_list, wavg_list, dist, format_dict, pdf):
+    # differentiante the plotting :
+    # 1) with profile or centriod  map&wavg
+    # 2) only data points + map&wavg
+    # 2.2) zoom of 150% around both metrics with only data points
+    # 3) zoom on minimal and maximal data points ()
+
+    for i in range(len(cal_masses)):
+        if cal_mask[i]:
+            plot_calibrant_spectrum(cal_masses[i], cal_names[i], cal_spectra[i],
+                                    dist,
+                                    mab_list[i], wavg_list[i],
+                                    pdf)
+        else:
+            plot_empty_peak(cal_masses[i], cal_names[i], pdf)
+
+
+def plot_calibrant_spectrum(cal_mass, cal_name, cal_spectrum,
+                            dist,
+                            mab, wavg,
+                            pdf):
+    """ Cal spectrum is the sliced variable of cal_spectra[i]
+        # differentiante the plotting :
+    # 1) with profile or centriod  map&wavg
+    # 2) only data points + map&wavg
+    # 2.2) zoom of 150% around both metrics with only data points
+    # 3) zoom on minimal and maximal data points ()"""
+    fig = plt.figure(figsize=[7, 5])
+    ax = plt.subplot(111)
+
+    ax.set_title(f'Spectrum of {cal_mass} ({cal_name})')
+    ax.set_xlabel('m/z')
+    ax.set_ylabel('Intensity')
+    ax.set_xlim(cal_mass - dist, cal_mass + dist)
+    ax.ticklabel_format(useOffset=False, )
+    ax.ticklabel_format(axis="y", style='sci', scilimits=(0, 0))
+
+    ax.scatter(cal_spectrum[0], cal_spectrum[1], s=4, zorder=-1)
+    ax.set_rasterization_zorder(0)
+
+    ax.axvline(mab, color='green', ls="--")
+    ax.axvline(cal_mass, c='r', ls=(0, (1, 3)))
+    ax.axvline(wavg, c='purple', ls="-.")
+
+    pdf.savefig(fig)
+    plt.close()
+
+
+def plot_empty_peak(cal_mass, cal_name, pdf):
+    fig = plt.figure(figsize=[7, 5])
+    ax = plt.subplot(111)
+    ax.set_title(f'Spectrum of {cal_mass} ({cal_name})')
+    ax.set_xlabel('m/z')
+    ax.set_ylabel('Intensity')
+    ax.text(cal_mass, 0, f'Peak for {cal_mass} m/z \n not found',
+            ha='center', fontsize=12)
+    pdf.savefig(fig)
+    plt.close()
