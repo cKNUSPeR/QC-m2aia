@@ -221,6 +221,7 @@ def average_cont_spectra(Image, pixels):
 def average_processed_spectra(Image, pixels):
     """Averages processed spectra by their pixels.
     Calculates a mz window with start, end and stepsize and bins the data into this.
+    the amount of bins is equal to 10 times the highest number of datapoints recorded.
     Masses are returned to the head of their respective bin.
     Input:
         - Image: an m2aia imzML reader
@@ -270,6 +271,52 @@ def average_processed_spectra(Image, pixels):
     # return as arrays
     return full_df['mz_bins'].to_numpy(), full_df["collect"].to_numpy()
 
+def calculate_spectral_coverage(mz_values, intensities):
+    """
+    calulates how much signal is recorded in a portion of the spectrum.
+    Cuts spectrum into bins of 100mz or 10mz, depending of input range.
+    output is percentage of Total Ion signal in that range
+
+    :param mz_values: array-like, set of mz values
+    :param intensities: array-like, intensities corresponding to mz values
+
+    :returns
+
+    bins : array
+     center of bins used for cutting the data
+    coverage: array
+     the coverage in spectral bin
+    """
+    min_mz = np.floor(min(mz_values))
+    max_mz = np.ceil(max(mz_values))
+    mz_range = int(max_mz - min_mz)
+
+    # dynamic scaling
+    if mz_range < 200:
+        # binsize of 10
+        bin_size = 10
+        bin_nr = mz_range//bin_size if mz_range % bin_size == 0 else mz_range//bin_size + 1
+        bins = [min_mz+i*bin_size for i in range(bin_nr+1)]
+
+    else:
+        # binsize of 100
+        bin_size = 100
+        bin_nr = mz_range // bin_size if mz_range % bin_size == 0 else mz_range // bin_size + 1
+        bins = [min_mz+i*bin_size for i in range(bin_nr+1)]
+
+    # set up a dataframe
+    df = pd.DataFrame({'mz': mz_values, "intensity": intensities})
+    # normalize to TIC
+    df["intensity"] = df["intensity"] / sum(intensities)
+    # sort into bins
+    df['binned'] = pd.cut(mz_values, bins)
+
+    # sum per bin
+    coverage = df.groupby(['binned'])['intensity'].sum().to_numpy()
+
+    # bins are pushed to their center, for easier plotting and last bin (right index) is dropped
+    bins = [i + bin_size/2 for i in bins[:-1]]
+    return bins, coverage
 
 def collect_image_stats(Image, statistic_keywords):
     """ Expensive function to call. iterates over the full spectrum and returns the specified metrics.

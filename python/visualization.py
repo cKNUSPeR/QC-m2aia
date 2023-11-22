@@ -347,6 +347,24 @@ def write_summary_table(table, pdf):
     plt.close()
 
 
+def write_calibrant_summary_table(data_frame, pdf):
+    # Create a figure and add the table
+    fig = plt.figure(figsize=[10, 10])
+    ax = plt.subplot(111)
+    ax.axis("off")  # Turn off axis
+    table = ax.table(cellText=data_frame.to_numpy(),
+                     colLabels=data_frame.columns,
+                     loc="center", cellLoc="center")
+
+    # Style the table
+    table.auto_set_font_size(False)
+    table.set_fontsize(14)
+    table.scale(1.2, 1.2)  # Adjust table scale for better layout
+    # weird error, where some text is not getting passed
+
+    pdf.savefig(fig, bbox_inches="tight")
+    plt.close()
+
 def plot_boxplots(name_boxplot, stat_boxplot, pdf):
     # 2DO: scaling adjusted to 20, also parametrized with titles, and mabe make a subfunction for plotting
     len_b20 = len(name_boxplot) // 20
@@ -740,3 +758,48 @@ def barplot_addlabels(pos,value, axes):
                 ha='center', fontsize=8)
 
 
+def plot_accuracy_images(Image, accuracy_images, calibrants_df, index_nr, accuracy_cutoff, x_limits, y_limits, pdf):
+    """Makes accuracy heatmaps per pixel ofthe found calibrant accuracy."""
+    # loop over the calibrants
+    for i, mass in enumerate(calibrants_df["mz"]):
+        img =  mask_bad_image(index_nr, accuracy_images[i] , Image.GetIndexArray()[0])
+
+        # plot each image
+        fig = plt.figure(figsize=[7, 5])
+        ax = plt.subplot(111)
+        ax.set_title(f'Mass Accuracy of {calibrants_df.loc[i, "name"]}, {calibrants_df.loc[i, "mz"]}')
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+
+        ax.set_xlim(x_limits[0], x_limits[1])
+        ax.set_ylim(y_limits[0], y_limits[1])
+        im = ax.imshow(img, cmap=my_cw, vmin=-accuracy_cutoff, vmax=accuracy_cutoff)
+        fig.colorbar(im, extend='both', label="ppm")
+
+        pdf.savefig(fig)
+        plt.close()
+
+
+
+def plot_coverage_barplot(names, data, pdf):
+    """Makes a bar plot of a given spectral coverage.
+    """
+
+    y_pos = np.arange(len(names))
+
+    fig = plt.figure(figsize=[7, 5])
+    ax = plt.subplot(111)
+
+    ax.set_title(f'spectral covoverage of mean spectrum)')
+    ax.set_xlabel('mz bin')
+    ax.set_ylabel('TIC percentage')
+    ax.set_xticks(y_pos)
+    ax.set_xticklabels(names, rotation=45, fontsize=8)
+
+    ax.bar(y_pos, data, color="blue")
+
+    # making the bar chart on the data
+    barplot_addlabels(y_pos, data, ax)
+
+    pdf.savefig(fig)
+    plt.close()

@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 #from nectar_msi.noise_correction.noise_determination import NoiseDetermination
-from nectar_msi import NoiseDetermination
+#from nectar_msi import NoiseDetermination
 import m2aia as m2
 def bgin_of_bin():
     n = 2

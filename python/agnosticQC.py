@@ -72,6 +72,15 @@ def report_agnostic_qc(I,  # m2.imzMLReader (passing by ref allows faster comput
     elif format_flags["profile"]:
         plot_profile_spectrum(I.GetXAxis(), I.GetMeanSpectrum(), pdf_pages)
 
+    # get spectral coverage data:
+    mean_bin, mean_coverage = calculate_spectral_coverage(I.GetXAxis(), I.GetMeanSpectrum())
+
+
+
+    # plot spectral coverage data
+    plot_coverage_barplot(mean_bin, mean_coverage, pdf_pages)
+
+
     write_summary_table(generate_table_data(I, x_lims, y_lims, image_stats),
                         pdf_pages)
 
