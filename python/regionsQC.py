@@ -1,5 +1,6 @@
+from dependencies import *
 from visualization import *
-
+from utils import *
 
 # if no regions provided, make a connected component analysis
 # and perform region control on that instead
@@ -12,7 +13,7 @@ def report_regions_qc(I,  # m2.imzMLReader (passing by ref allows faster computa
                       regionfile_path=False,  # path to tsv file for region annotation
                       ):
     # Create a PDF file to save the figures
-    pdf_pages = make_pdf_backend(outfile_path, "region_QC")
+    pdf_pages = make_pdf_backend(outfile_path, "_region_QC")
 
     # get the image limits to crop and display only relevant parts
     x_lims, y_lims = evaluate_image_corners(I.GetMaskArray()[0])
@@ -57,14 +58,8 @@ def report_regions_qc(I,  # m2.imzMLReader (passing by ref allows faster computa
     plot_regions_average(I, format_flags, region_image, nr_regions, pdf_pages)
 
     pdf_pages.close()
-    print("QC sussefully generated at: ", outfile_path)
+    print("QC sussefully generated at: ",  outfile_path+"_region_QC.pdf")
 
 
-if __name__ == "__main__":
-    file_name = r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\conv_output_centroided.imzML"
-    I = m2.ImzMLReader(file_name)
-    report_regions_qc(I,
-                      r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\kidney_w_regions",
-                      r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\kidney_annotated_regions.tsv")
 
 # report_regions_QC(I, r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\kidney_wo_regions",

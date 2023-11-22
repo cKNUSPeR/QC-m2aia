@@ -1,4 +1,6 @@
-from utils import *
+
+from dependencies import *
+from utils import mask_bad_image, average_cont_spectra, average_processed_spectra
 
 # custom colormaps with white backgrounds (via out-of-lower-bound)
 my_vir = cm.get_cmap('viridis').copy()
@@ -38,7 +40,8 @@ def image_full_binary(Image, pdf):
     ax.set_title('Full view of binary image from origin')
     ax.imshow(Image,
               cmap=my_vir, vmin=0.1,
-              interpolation='none')  # attention, large images tend to get a smoohing under the hood by plt
+              interpolation='none',  # attention, large images tend to get a smoohing under the hood by plt
+              origin='lower')
     pdf.savefig(fig)
     plt.close()
 
@@ -100,11 +103,6 @@ def image_regions(Image, regionarray, pdf, x_limits, y_limits):
     pdf.savefig(fig)
     plt.close()
 
-
-def plot_region_intesities():
-    #
-    print("whoospie, this function isn't implemented yet. Lets see if anyone will notice x)")
-    return None
 
 
 def plot_basic_scatter(x, y,
@@ -308,6 +306,7 @@ def plot_centroid_spectrum(mz_axis, spectrum_data, pdf):
     ax.set_xlim(min(mz_axis).round(0), max(mz_axis).round(0))
 
     ax.vlines(mz_axis, 0, spectrum_data, linewidth=0.8)
+    ax.set_ylim(bottom=0)
 
     pdf.savefig(fig)
     plt.close()
@@ -323,6 +322,7 @@ def plot_profile_spectrum(mz_axis, spectrum_data, pdf):
     ax.set_xlim(min(mz_axis).round(0), max(mz_axis).round(0))
 
     ax.plot(mz_axis, spectrum_data, linewidth=0.8)
+    ax.set_ylim(bottom=0)
 
     pdf.savefig(fig)
     plt.close()
@@ -742,10 +742,13 @@ def plot_accu_barplot(names, values, metric_name, color, pdf):
     ax.set_xticks(y_pos)
     ax.set_xticklabels(names, rotation=45, fontsize=8)
 
-    ax.bar(y_pos, values, color=color)
+    bars = ax.bar(y_pos, values, color=color)
 
     # making the bar chart on the data
-    barplot_addlabels(y_pos, values, ax)
+    for bar in bars:
+        height = bar.get_height()
+        ax.annotate(f'{height:.4f}', xy=(bar.get_x() + bar.get_width() / 2, height), xytext=(0, 3),
+                    textcoords="offset points", ha='center', va='bottom')
 
     pdf.savefig(fig)
     plt.close()
@@ -762,7 +765,7 @@ def plot_accuracy_images(Image, accuracy_images, calibrants_df, index_nr, accura
     """Makes accuracy heatmaps per pixel ofthe found calibrant accuracy."""
     # loop over the calibrants
     for i, mass in enumerate(calibrants_df["mz"]):
-        img =  mask_bad_image(index_nr, accuracy_images[i] , Image.GetIndexArray()[0])
+        img = mask_bad_image(index_nr, accuracy_images[i] , Image.GetIndexArray()[0])
 
         # plot each image
         fig = plt.figure(figsize=[7, 5])
@@ -792,14 +795,17 @@ def plot_coverage_barplot(names, data, pdf):
 
     ax.set_title(f'spectral covoverage of mean spectrum)')
     ax.set_xlabel('mz bin')
-    ax.set_ylabel('TIC percentage')
+    ax.set_ylabel('contribution to Total Ion Signal')
     ax.set_xticks(y_pos)
     ax.set_xticklabels(names, rotation=45, fontsize=8)
 
-    ax.bar(y_pos, data, color="blue")
+    bars = ax.bar(y_pos, data, width=0.95, color="blue")
 
     # making the bar chart on the data
-    barplot_addlabels(y_pos, data, ax)
+    for bar in bars:
+        height = bar.get_height()
+        ax.annotate(f'{height:.4f}', xy=(bar.get_x() + bar.get_width() / 2, height), xytext=(0, 3),
+                    textcoords="offset points", ha='center', va='bottom')
 
     pdf.savefig(fig)
     plt.close()

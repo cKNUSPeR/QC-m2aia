@@ -1,13 +1,14 @@
-
-from utils import *
+from dependencies import *
 from visualization import *
-from cal_utils import *
+from utils import *
 
 
 def report_calibrant_qc(I, # m2.imzMLReader (passing by ref allows faster computation)
                         outfile_path: str,  # path for output file
                         calfile_path: str,  # path to tsv file for calibrants
-                        dist: float # allowed distance to check for signals around thoe. masses
+                        dist: float, # allowed distance to check for bulk metrics around theo. masses
+                        ppm: float, # +- ppm cutoff for accuracy determination
+                        sample_size: float = 1 # coverage of sample to be used for bulk calc, between 0 and 1
                         ):
 
     #  read in the calibrants
@@ -17,7 +18,7 @@ def report_calibrant_qc(I, # m2.imzMLReader (passing by ref allows faster comput
     pdf_pages = make_pdf_backend(outfile_path, "_calibrant_QC")
 
     #Make a subsample to test accuracies on
-    randomlist = make_subsample(I.GetNumberOfSpectra(), 1)
+    randomlist = make_subsample(I.GetNumberOfSpectra(), sample_size)
 
     # create format flag dict to check formatting of imzML file
     format_flags = evaluate_formats(I.GetSpectrumType())
@@ -48,14 +49,11 @@ def report_calibrant_qc(I, # m2.imzMLReader (passing by ref allows faster comput
     # calculate per pixel for nearest loc-max the accuracy
     accuracy_images, pixel_order = collect_accuracy_stats(I, calibrants, dist, format_flags)
 
-    # accuracy cutoff in ppm to consider
-    accuracy_cutoff = 50
-
     # calculate coverage from accuracy images
-    calibrants = collect_calibrant_converage(accuracy_images, calibrants, accuracy_cutoff)
+    calibrants = collect_calibrant_converage(accuracy_images, calibrants, ppm)
 
     # make accuracy images
-    plot_accuracy_images(I, accuracy_images, calibrants, pixel_order, accuracy_cutoff, x_lims, y_lims, pdf_pages)
+    plot_accuracy_images(I, accuracy_images, calibrants, pixel_order, ppm, x_lims, y_lims, pdf_pages)
 
     # sumamary with coverage and avg. accuracy in non-zero pixels
     write_calibrant_summary_table(calibrants, pdf_pages)
@@ -64,10 +62,5 @@ def report_calibrant_qc(I, # m2.imzMLReader (passing by ref allows faster comput
     print("QC sussefully generated at: ", outfile_path+"_calibrant_QC.pdf")
 
 
-if __name__ == "__main__":
-    file_name =  r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\Example_Continuous_imzML\Example_Continuous.imzML"
-    I = m2.ImzMLReader(file_name)
-    report_calibrant_qc(I,
-                        r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\cunt_prof",
-                        r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\test_signals.csv",
-                        0.025)
+
+
