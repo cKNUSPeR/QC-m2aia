@@ -1,15 +1,18 @@
-from QC_v1_4 import generate_TTF_QC
+import m2aia as m2
+from qctools import report_agnostic_qc,  report_calibrant_qc, report_regions_qc
 
-# specify location of input data
-sample_list = ["D:\\wittej\\data\\Mannheim centroided data TMA6.2\\freiburg_metabolite measurement_no normalization_cemos.imzML",
-               "D:\\wittej\\data\\ICC_TMA62_jannik_versuch2",
-               "D:\\wittej\\data\\TMA4_centroided\\FTICR.imzML"
-               
-               ]
-               
-cal =  "D:\\programs\\M2aia\\calibrants_9AA.csv"
-            
-for sample in sample_list:
-    generate_TTF_QC(sample,cal)
-    # output data is saved next to input data           
-          
+if __name__ == "__main__":
+    file_name = r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\conv_output_centroided.imzML"
+    I = m2.ImzMLReader(file_name)
+
+    report_agnostic_qc(I,
+                       r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\kidney_w_regions")
+
+    report_calibrant_qc(I,
+                        r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\kidney_w_regions",
+                        r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\calibrants_9AA.csv",
+                        0.025, 50, 1)
+
+    report_regions_qc(I,
+                      r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\kidney_w_regions",
+                      r"C:\Users\Jannik\Documents\Uni\Master_Biochem\4_Semester\M2aia\data\exmpl_cont\kidney_annotated_regions.tsv")
